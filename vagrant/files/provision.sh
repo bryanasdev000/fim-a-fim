@@ -24,6 +24,7 @@ apt-get update
 apt-get install -y vim git lua5.3 luarocks firebird-dev liblua5.3-dev firebird3.0-server
 apt-get clean
 luarocks install luasql-firebird
+luarocks install lua-cjson 2.1.0-1
 
 echo "CREATE USER app PASSWORD '$APP_PASSWORD';" | isql-fb -u sysdba -p "$SYSDBA_PASSWORD" /var/lib/firebird/3.0/system/security3.fdb
 echo "CREATE DATABASE '/var/lib/firebird/3.0/data/luafirebird.fdb';" | isql-fb -u app -p "$APP_PASSWORD" /var/lib/firebird/3.0/system/security3.fdb

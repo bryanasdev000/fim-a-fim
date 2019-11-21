@@ -28,7 +28,7 @@ local b, c, h = https.request {
 
 local data = json.decode(table.concat(res))
 
-for i, tweet in ipairs(data.statuses) do
+for i, tweet in pairs(data.statuses) do
 	local user = tweet.user
 	local status, msg = pcall(function()
 		res = assert (firebird:execute(string.format([[

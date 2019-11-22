@@ -1,3 +1,6 @@
 .env
 .vagrant
 *.dia~
+config.lua
+nginx.conf.compiled
+logs

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Fim a Fim</title>
+		<meta charset="UTF-8">
+		<link rel="icon" type="image/ico" href="/static/favicon.ico">
+		<link rel="stylesheet" type="text/css" href="/static/css/bare.min.css">
+        <!-- development version, includes helpful console warnings -->
+        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <!-- production version, optimized for size and speed -->
+        <!-- <script src="https://cdn.jsdelivr.net/npm/vue"></script> -->
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    </head>
+    <body>
+        <div id="vue">
+            <h1>Lua!</h1>
+            <h2>{{ msg }}</h2>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Seguidores</th>
+                </tr>
+                <tr v-for="u in top_five">
+                    <td>{{u.id}}</td>
+                    <td>{{u.name}}</td>
+                    <td>{{u.followers_count}}</td>
+                <tr>
+            </table>
+        </div>
+        <script>
+            var app = new Vue({
+                el: '#vue',
+                data: {
+                    msg: 'Powered with VueJS!',
+                    top_five: null,
+                    by_hour: null,
+                    by_tag_location: null
+                },
+                mounted() {
+                    axios
+                        .get('/top_users')
+                        .then(response => (this.top_five = response.data));
+                    axios
+                        .get('/tweets_by_hour')
+                        .then(response => (this.by_hour = response.data));
+                    axios
+                        .get('/tweets_by_tag_and_location')
+                        .then(response => (this.by_tag_country = response.data));
+                }
+            });
+        </script>
+    </body>
+</html>

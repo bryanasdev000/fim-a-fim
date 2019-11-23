@@ -13,40 +13,118 @@
     </head>
     <body>
         <div id="vue">
-            <h1>Lua!</h1>
-            <h2>{{ msg }}</h2>
-            <table>
-                <tr>
-                    <th>ID</th>
-                    <th>Nome</th>
-                    <th>Seguidores</th>
-                </tr>
-                <tr v-for="u in top_five">
-                    <td>{{u.id}}</td>
-                    <td>{{u.name}}</td>
-                    <td>{{u.followers_count}}</td>
-                <tr>
-            </table>
+            <nav><!-- use fx attribute for fixed positioning -->
+            	<label>
+            		<input type="checkbox">
+            		<header>
+            			<a v-on:click="get_home" href="#"><img src="static/lua-logo.svg">Twitter Harvester</a>
+            		</header>
+            		<ul>
+            			<li><a href="#fetch">Fetch</a></li>
+            			<li><a v-on:click="get_top_five" href="#top_users">Top 5</a></li>
+            			<li><a v-on:click="" href="#tweets_by_hour">Tweets por Hora</a></li>
+            			<li><a v-on:click="" href="#tweets_by_tag_and_location">Tweets por Tag/Local</a></li>
+            		</ul>
+            	</label>
+            </nav>
+            <template v-if="show_home">
+                <section mt->
+	                <h1>Twitter Harvester</h1>
+                    <h3>Powered by <b><a href="https://www.lua.org/" target="_blank">Lua</a></b> and <b><a href="https://vuejs.org/" target="_blank">Vue.js</a></b>!</h3>
+                    <p>Uma pequena aplicação utilizada para extrair dados do <b>Twitter</b> com base nas hashtags:</p>
+                    <ul>
+                        <li>openbanking</li>
+                        <li>apifirst</li>
+                        <li>devops</li>
+                        <li>cloudfirst</li>
+                        <li>microservices</li>
+                        <li>apigateway</li>
+                        <li>oauth</li>
+                        <li>swagger</li>
+                        <li>raml</li>
+                        <li>openapis</li>
+                    </ul>
+                    <p>A API REST foi desenvolvida com <b><a href="https://leafo.net/lapis/" target="_blank">Lapis</a></b> e possui os seguintes endpoints:</p>
+                    <ul>
+                        <li>GET - <b>/fetch</b> - Limpa o banco de dados e alimenta com novas informações</li>
+                        <li>GET - <b>/top_five</b> - Busca os usuários com mais seguidores</li>
+                        <li>GET - <b>/tweets_by_hour</b> - Lista a quantidade de tweets por hora, independente da hashtag</li>
+                        <li>GET - <b>/tweets_by_tag_and_location</b> - Lista os tweets por localização dos usuários e hashtags</li>
+                    </ul>
+                </section>
+            </template>
+            <template v-if="show_top_five">
+                <section mt->
+                    <div>
+                        <table>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Seguidores</th>
+                            </tr>
+                            <tr v-for="u in top_five">
+                                <td>{{u.id}}</td>
+                                <td>{{u.name}}</td>
+                                <td>{{u.followers_count}}</td>
+                            <tr>
+                        </table>
+                    </div>
+                </section>
+            </template>
+            <template v-if="show_by_hour">
+                <section mt->
+                    <div>
+                        <table>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Quantidade</th>
+                            </tr>
+                            <tr v-for="i in by_hour">
+                                <td>{{i.hour}}</td>
+                                <td>{{i.qtd}}</td>
+                            <tr>
+                        </table>
+                    </div>
+                </section>
+            </template>
         </div>
         <script>
             var app = new Vue({
                 el: '#vue',
                 data: {
-                    msg: 'Powered with VueJS!',
+                    show_home: true,
                     top_five: null,
+                    show_top_five: false,
                     by_hour: null,
-                    by_tag_location: null
+                    show_by_hour: false,
+                    by_tag_location: null,
+                    show_by_tag_location: false
                 },
-                mounted() {
-                    axios
-                        .get('/top_users')
-                        .then(response => (this.top_five = response.data));
-                    axios
-                        .get('/tweets_by_hour')
-                        .then(response => (this.by_hour = response.data));
-                    axios
-                        .get('/tweets_by_tag_and_location')
-                        .then(response => (this.by_tag_country = response.data));
+                methods: {
+                    get_home: function(event) {
+                        this.hide_all('home');
+                    },
+                    get_top_five: function(event) {
+                        axios
+                            .get('/top_users')
+                            .then(response => (this.top_five = response.data));
+                        this.hide_all('top_five');
+                    },
+                    get_by_hour: function(event) {
+                        axios
+                            .get('/tweets_by_hour')
+                            .then(response => (this.by_hour = response.data));
+                    },
+                    get_by_tag_location: function(event) {
+                        axios
+                            .get('/tweets_by_tag_and_location')
+                            .then(response => (this.by_tag_country = response.data));
+                    },
+                    hide_all: function(skip) {
+                        var screens = ['home', 'top_five', 'by_hour', 'by_tag_location'];
+                        for(var i in screens)
+                            this['show_' + screens[i]] = screens[i] == skip ? true : false;
+                    }
                 }
             });
         </script>

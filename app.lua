@@ -31,7 +31,7 @@ app:get('/tweets_by_hour', function()
     local cur = assert (conn:execute"SELECT EXTRACT(HOUR FROM created_at) AS created_hour, COUNT(*) AS qtd FROM tweets GROUP BY created_hour")
     row = cur:fetch ({}, "n")
     while row do
-        table.insert(tweets, {hour=row[1], count=row[2]})
+        table.insert(tweets, {hour=string.format('%02u:00', row[1]), count=row[2]})
         row = cur:fetch (row, "n")
     end
     return { json = tweets }
@@ -39,7 +39,7 @@ end)
 
 app:get('/tweets_by_tag_and_location', function()
     tweets = {}
-    local cur = assert (conn:execute"SELECT location, hashtag_id, COUNT(*) qtd FROM tweets_hashtags th JOIN tweets t ON th.tweet_id = t.id JOIN users u ON t.user_id = u.id WHERE th.hashtag_id = 'devops' GROUP BY hashtag_id, location ORDER BY hashtag_id, location")
+    local cur = assert (conn:execute"SELECT location, hashtag_id, COUNT(*) qtd FROM tweets_hashtags th JOIN tweets t ON th.tweet_id = t.id JOIN users u ON t.user_id = u.id WHERE th.hashtag_id IN ('openbanking', 'apifirst', 'devops', 'cloudfirst', 'microservices', 'apigateway', 'oauth', 'swagger', 'raml', 'openapis') GROUP BY hashtag_id, location ORDER BY hashtag_id, location")
     row = cur:fetch ({}, "n")
     while row do
         table.insert(tweets, {location=row[1], hashtag=row[2], count=row[3]})

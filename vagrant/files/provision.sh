@@ -91,6 +91,9 @@ echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_tweet FOREIGN KEY (tweet_
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_hashtag FOREIGN KEY (hashtag_id) REFERENCES hashtags(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "CREATE UNIQUE INDEX idx_tweet_hashtag ON tweets_hashtags (tweet_id, hashtag_id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 
+# Adiciona filtro ao Graylog
+mongo graylog --eval 'db.inputs.insert({ "_id" : ObjectId("5dd9ae7a4d7ac153481a7bd5"), "creator_user_id" : "admin", "configuration" : { "idle_writer_timeout" : 60, "recv_buffer_size" : 1048576, "max_chunk_size" : 65536, "tcp_keepalive" : false, "number_worker_threads" : 4, "enable_cors" : true, "tls_client_auth_cert_file" : "", "bind_address" : "0.0.0.0", "tls_cert_file" : "", "decompress_size_limit" : 8388608, "port" : 12201, "tls_key_file" : "", "tls_enable" : false, "tls_key_password" : "", "tls_client_auth" : "disabled", "override_source" : null }, "name" : "GELF HTTP", "created_at" : ISODate("2019-11-24T01:55:08.037Z"), "global" : true, "type" : "org.graylog2.inputs.gelf.http.GELFHttpInput", "title" : "gelf", "content_pack" : null })'
+
 cat > /lib/systemd/system/twitter-harvester.service <<EOF
 [Unit]
 Description = Inicia o servidor Openresty para o Twitter Harvester

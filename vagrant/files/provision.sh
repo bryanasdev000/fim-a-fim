@@ -22,7 +22,7 @@ EOF
 
 # Lua, Firebird, Vim e outros
 apt-get update
-apt-get install -y vim git lua5.1 luarocks lua-inspect liblua5.1-dev firebird-dev firebird3.0-server libssh-dev wget gnupg ca-certificates software-properties-common
+apt-get install -y vim git lua5.1 luarocks lua-inspect liblua5.1-dev firebird-dev firebird3.0-server libssh-dev wget gnupg ca-certificates software-properties-common apt-transport-https
 apt-get clean
 
 # OpenResty
@@ -35,6 +35,32 @@ luarocks install luasql-firebird
 luarocks install lua-cjson 2.1.0-1
 luarocks install date
 luarocks install lapis
+
+# MongoDB
+wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
+echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.2 main" > /etc/apt/sources.list.d/mongodb-org-4.2.list
+apt-get update && apt-get install -y mongodb-org
+systemctl start mongod
+systemctl enable mongod
+
+# Elasticsearch
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
+echo "deb https://artifacts.elastic.co/packages/6.x/apt stable main" > /etc/apt/sources.list.d/elastic-6.x.list
+apt-get update && apt-get install -y elasticsearch
+systemctl start elasticsearch
+systemctl enable elasticsearch
+
+# Graylog
+wget https://packages.graylog2.org/repo/packages/graylog-3.1-repository_latest.deb
+dpkg -i graylog-3.1-repository_latest.deb
+apt-get update
+apt-get install -y graylog-server openjdk-11-jre
+sed -i 's/password_secret =/password_secret = /wNJfMeW3ykAmLV8dMqp4Bkpzm444dsn7/' /etc/graylog/server/server.conf
+GRAYLOG_PWD="$(echo -n admin | sha256sum | cut -d' ' -f1)"
+sed -i "s/root_password_sha2 =/root_password_sha2  = $GRAYLOG_PWD/" /etc/graylog/server/server.conf
+sed -i 's/#http_bind_address = 127.0.0.1:9000/http_bind_address = 0.0.0.0:9000/' /etc/graylog/server/server.conf
+systemctl start graylog-server
+systemctl enable graylog-server
 
 #  OpenSSL 1.1.1
 apt-get install -y build-essential
@@ -57,10 +83,27 @@ chown firebird: /var/lib/firebird/3.0/data/luafirebird.fdb
 systemctl start firebird3.0
 
 echo "CREATE TABLE tweets (id BIGINT NOT NULL PRIMARY KEY, created_at TIMESTAMP NOT NULL, user_id BIGINT NOT NULL, text VARCHAR(500) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE TABLE users (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(50) NOT NULL, followers_count INT NOT NULL, screen_name VARCHAR(50) NOT NULL, location VARCHAR(50) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE TABLE hashtags (id VARCHAR(20) NOT NULL PRIMARY KEY);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE TABLE tweets_hashtags (tweet_id BIGINT NOT NULL, hashtag_id VARCHAR(20) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
+echo "CREATE TABLE users (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(100) NOT NULL, followers_count INT NOT NULL, screen_name VARCHAR(50) NOT NULL, location VARCHAR(100) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
+echo "CREATE TABLE hashtags (id VARCHAR(50) NOT NULL PRIMARY KEY);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
+echo "CREATE TABLE tweets_hashtags (tweet_id BIGINT NOT NULL, hashtag_id VARCHAR(50) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "ALTER TABLE tweets ADD CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFERENCES users(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_tweet FOREIGN KEY (tweet_id) REFERENCES tweets(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_hashtag FOREIGN KEY (hashtag_id) REFERENCES hashtags(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "CREATE UNIQUE INDEX idx_tweet_hashtag ON tweets_hashtags (tweet_id, hashtag_id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
+
+cat > /lib/systemd/system/twitter-harvester.service <<EOF
+[Unit]
+Description = Inicia o servidor Openresty para o Twitter Harvester
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+WorkingDirectory = /opt/app
+ExecStart = lapis server
+
+[Install]
+WantedBy = multi-user.target
+EOF
+
+systemctl start twitter-harvester
+systemctl enable twitter-harvester

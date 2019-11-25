@@ -22,19 +22,13 @@ EOF
 
 # Lua, Firebird, Vim e outros
 apt-get update
-apt-get install -y vim git lua5.1 luarocks lua-inspect liblua5.1-dev firebird-dev firebird3.0-server libssh-dev wget gnupg ca-certificates software-properties-common apt-transport-https
+apt-get install -y vim git lua5.1 luarocks lua-inspect liblua5.1-dev firebird-dev firebird3.0-server libssh-dev wget gnupg ca-certificates software-properties-common apt-transport-https openjdk-11-jre
 apt-get clean
 
 # OpenResty
 wget -O - https://openresty.org/package/pubkey.gpg | sudo apt-key add -
 sudo add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc) openresty"
-sudo apt-get update
-sudo apt-get -y install openresty
-
-luarocks install luasql-firebird
-luarocks install lua-cjson 2.1.0-1
-luarocks install date
-luarocks install lapis
+sudo apt-get update && apt-get -y install openresty
 
 # MongoDB
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
@@ -54,13 +48,26 @@ systemctl enable elasticsearch
 wget https://packages.graylog2.org/repo/packages/graylog-3.1-repository_latest.deb
 dpkg -i graylog-3.1-repository_latest.deb
 apt-get update
-apt-get install -y graylog-server openjdk-11-jre
-sed -i 's/password_secret =/password_secret = /wNJfMeW3ykAmLV8dMqp4Bkpzm444dsn7/' /etc/graylog/server/server.conf
+apt-get install -y graylog-server
+sed -i 's/password_secret =/password_secret = wNJfMeW3ykAmLV8dMqp4Bkpzm444dsn7/' /etc/graylog/server/server.conf
 GRAYLOG_PWD="$(echo -n admin | sha256sum | cut -d' ' -f1)"
 sed -i "s/root_password_sha2 =/root_password_sha2  = $GRAYLOG_PWD/" /etc/graylog/server/server.conf
 sed -i 's/#http_bind_address = 127.0.0.1:9000/http_bind_address = 0.0.0.0:9000/' /etc/graylog/server/server.conf
 systemctl start graylog-server
 systemctl enable graylog-server
+
+# Prometheus
+apt-get install -y prometheus
+systemctl start prometheus
+systemctl enable prometheus
+
+apt-get clean
+
+# Dependências da aplicação
+luarocks install luasql-firebird
+luarocks install lua-cjson 2.1.0-1
+luarocks install date
+luarocks install lapis
 
 #  OpenSSL 1.1.1
 apt-get install -y build-essential
@@ -93,6 +100,16 @@ echo "CREATE UNIQUE INDEX idx_tweet_hashtag ON tweets_hashtags (tweet_id, hashta
 
 # Adiciona filtro ao Graylog
 mongo graylog --eval 'db.inputs.insert({ "_id" : ObjectId("5dd9ae7a4d7ac153481a7bd5"), "creator_user_id" : "admin", "configuration" : { "idle_writer_timeout" : 60, "recv_buffer_size" : 1048576, "max_chunk_size" : 65536, "tcp_keepalive" : false, "number_worker_threads" : 4, "enable_cors" : true, "tls_client_auth_cert_file" : "", "bind_address" : "0.0.0.0", "tls_cert_file" : "", "decompress_size_limit" : 8388608, "port" : 12201, "tls_key_file" : "", "tls_enable" : false, "tls_key_password" : "", "tls_client_auth" : "disabled", "override_source" : null }, "name" : "GELF HTTP", "created_at" : ISODate("2019-11-24T01:55:08.037Z"), "global" : true, "type" : "org.graylog2.inputs.gelf.http.GELFHttpInput", "title" : "gelf", "content_pack" : null })'
+
+# Adiciona a dashboard ao Graylog
+mongo graylog --evail 'db.dashboards.insert({ "_id" : ObjectId("5ddad80d58bdb33ff3c81d0d"), "creator_user_id" : "admin", "description" : "Dashboard para análise dos logs da aplicação Twitter Harvester", "created_at" : ISODate("2019-11-24T19:20:45.154Z"), "positions" : { "97b04669-d9d1-4076-9fd9-5e29a0854517" : { "width" : 4, "col" : 3, "row" : 1, "height" : 4 }, "e6bfa5b4-4229-4439-a45d-d8df73b532ca" : { "width" : 2, "col" : 1, "row" : 1, "height" : 4 } }, "title" : "Twitter Harvester", "widgets" : [ { "creator_user_id" : "admin", "cache_time" : 10, "description" : "Acessos, Alertas e Erros", "id" : "e6bfa5b4-4229-4439-a45d-d8df73b532ca", "type" : "QUICKVALUES", "config" : { "timerange" : { "type" : "relative", "range" : 0 }, "field" : "level", "query" : "gl2_source_input:5dd9ae7a4d7ac153481a7bd5", "show_data_table" : true, "limit" : 5, "show_pie_chart" : true, "sort_order" : "desc", "stacked_fields" : "", "data_table_limit" : 50 } }, { "creator_user_id" : "admin", "cache_time" : 10, "description" : "Queries", "id" : "97b04669-d9d1-4076-9fd9-5e29a0854517", "type" : "QUICKVALUES", "config" : { "timerange" : { "type" : "relative", "range" : 0 }, "field" : "query", "query" : "gl2_source_input: 5dd9ae7a4d7ac153481a7bd5", "show_data_table" : true, "limit" : 5, "show_pie_chart" : false, "sort_order" : "desc", "stacked_fields" : "", "data_table_limit" : 50 } } ] })'
+
+# Adiciona o target ao Prometheus
+cat >> /etc/prometheus/prometheus.yml <<'EOF'
+  - job_name: twitter_harvester
+    static_configs:
+      - targets: ['localhost:8080']
+EOF
 
 cat > /lib/systemd/system/twitter-harvester.service <<EOF
 [Unit]

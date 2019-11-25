@@ -1,6 +1,8 @@
 local json = require('cjson')
 local lapis = require("lapis")
+local https = require("ssl.https")
 local inspect = require("inspect")
+local http = require('socket.http')
 local driver = require('luasql.firebird')
 local config = require("lapis.config").get()
 
@@ -19,7 +21,76 @@ app:before_filter(function(self)
 end)
 
 app:get("index", "/", function()
-    return { render = true }
+    return { render = true, layout=false }
+end)
+
+app:get("/metrics", function()
+
+    local socket = require('socket')
+    local total_latency = socket.gettime()
+
+    local start = socket.gettime()
+    local b, c, h, s = http.request('http://admin:admin@localhost:9000/api/dashboards/5ddad80d58bdb33ff3c81d0d/widgets/e6bfa5b4-4229-4439-a45d-d8df73b532ca/value')
+    local graylog = json.decode(b)
+    if graylog.result.terms["3"] == nil then
+        graylog.result.terms["3"] = 0
+    end
+    local finish = socket.gettime()
+    local graylog_latency = finish - start
+
+    local twitter_key = assert (config.tw_key)
+    local twitter_secret = assert (config.tw_secret)
+
+    start = socket.gettime()
+    local url = 'https://%s:%s@api.twitter.com/oauth2/token'
+    local b, c, h = https.request(string.format(url, twitter_key, twitter_secret), 'grant_type=client_credentials')
+    if b == nil or c ~= 200 then
+        push_graylog('ERROR', string.format('%s - %s', url, c), 3)
+    end
+    finish = socket.gettime()
+    local twitter_token_latency = finish - start
+    local token = json.decode(b)
+
+    start = socket.gettime()
+    local url = 'https://api.twitter.com/1.1/search/tweets.json?q=%23devops&count=1&tweet_mode=extended'
+    local res = {}
+    local b, c, h = https.request {
+        url = url,
+        sink = ltn12.sink.table(res),
+        headers = {
+            authorization = string.format('Bearer %s', token.access_token)
+        }
+    }
+    finish = socket.gettime()
+    local twitter_search_latency = finish - start
+    if b == nil or c ~= 200 then
+        push_graylog('ERROR', string.format('%s - %s', url, c), 3)
+    end
+
+    total_latency = socket.gettime() - total_latency
+    local metrics = [[# HELP twitter_harverster_stats by type
+# TYPE twitter_harvester_stats counter
+twitter_harvester_stats{type="error"} %s
+twitter_harvester_stats{type="warning"} %s
+twitter_harvester_stats{type="access"} %s
+# HELP twitter_harvester_latency shows latency of various internal calls
+# TYPE twitter_harvester_latency gauge
+twitter_harvester_latency{name="graylog"} %.3f
+twitter_harvester_latency{name="twitter_token"} %.3f
+twitter_harvester_latency{name="twitter_search"} %.3f
+twitter_harvester_latency{name="api"} %.3f]]
+    return { string.format(metrics,
+        graylog.result.terms["3"],
+        graylog.result.terms["4"],
+        graylog.result.terms["6"],
+        graylog_latency,
+        twitter_token_latency,
+        twitter_search_latency,
+        total_latency),
+        content_type='text',
+        layout=false
+
+    }
 end)
 
 app:get('/top_users', function()
@@ -61,14 +132,13 @@ end)
 app:get('/fetch', function()
 
     local date = require('date')
-    local https = require("ssl.https")
     
     local twitter_key = assert (config.tw_key)
     local twitter_secret = assert (config.tw_secret)
     
     local url = 'https://%s:%s@api.twitter.com/oauth2/token'
     local b, c, h = https.request(string.format(url, twitter_key, twitter_secret), 'grant_type=client_credentials')
-    if b == nil then
+    if b == nil or c ~= 200 then
         push_graylog('ERROR', string.format('%s - %s', url, c), 3)
         return { status = 500, json = {message=c}}
     end
@@ -91,7 +161,7 @@ app:get('/fetch', function()
                 authorization = string.format('Bearer %s', token.access_token)
             }
         }
-        if b == nil then
+        if b == nil or c ~= 200 then
             push_graylog('ERROR', string.format('%s - %s', url, c), 3)
             return { status = 500, json = {message=c}}
         end
@@ -122,8 +192,6 @@ end)
 
 function insert(query, line)
     
-    local http = require('socket.http')
-    
     local status, msg = pcall(function()
         local res = assert (conn:execute(query))
     end)
@@ -133,7 +201,7 @@ function insert(query, line)
         if string.find(msg, 'PRIMARY or UNIQUE KEY') == nil and string.find(msg, 'attempt to store duplicate value') == nil then
             level = 3
         end
-        local payload = json.encode({version='1.1', host=hostname, level=level, short_message='QUERY ERROR', full_message=msg, _line=line, _file='app.lua', _query=query})
+        local payload = json.encode({version='1.1', host=hostname, level=level, short_message='QUERY ERROR', full_message=msg, _line=line, _file='app.lua', _query=query, _app='twitter_harvester'})
         
         local b, c, h, s = http.request {
             url = 'http://localhost:12201/gelf',
@@ -149,8 +217,7 @@ end
 
 function push_graylog(short_message, full_message, level)
     
-    local payload = json.encode({version='1.1', host=hostname, level=level, short_message=short_message, full_message=full_message, _file='app.lua'})
-    local http = require('socket.http')
+    local payload = json.encode({version='1.1', host=hostname, level=level, short_message=short_message, full_message=full_message, _file='app.lua', _app='twitter_harvester'})
     local b, c, h, s = http.request {
         url = 'http://localhost:12201/gelf',
         method = 'POST',

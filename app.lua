@@ -6,18 +6,25 @@ local http = require('socket.http')
 local driver = require('luasql.firebird')
 local config = require("lapis.config").get()
 
+local functions = require("functions")
+
 local app = lapis.Application()
 app:enable('etlua')
 
-local env = assert (driver.firebird())
-local conn = assert (env:connect('localhost:/var/lib/firebird/3.0/data/luafirebird.fdb', 'app', 'zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J'))
-conn:setautocommit(true)
-
-local cmd = io.popen('hostname -f')
-local hostname = string.gsub(cmd:read("*a"), "%s+", "")
+local env = nil
+local conn = nil
 
 app:before_filter(function(self)
-    push_graylog('INFO', 'Acceso ao endpoint ' .. self.req.parsed_url.path, 6)
+	functions.push_graylog('INFO', 'Acceso ao endpoint ' .. self.req.parsed_url.path, 6)
+	local status, msg = pcall(function()
+		env = assert (driver.firebird())
+		conn = assert (env:connect('localhost:/var/lib/firebird/3.0/data/luafirebird.fdb', 'app', 'zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J'))
+		conn:setautocommit(true)
+	end)
+	if not status then
+	    functions.push_graylog('ERROR', msg, 3)
+      self:write({ status = 500, json = {message='Impossível se conectar ao banco de dados'}})
+	end
 end)
 
 app:get("index", "/", function()
@@ -48,7 +55,7 @@ app:get("/metrics", function()
     local url = 'https://%s:%s@api.twitter.com/oauth2/token'
     local b, c, h = https.request(string.format(url, twitter_key, twitter_secret), 'grant_type=client_credentials')
     if b == nil or c ~= 200 then
-        push_graylog('ERROR', string.format('%s - %s', url, c), 3)
+        functions.push_graylog('ERROR', string.format('%s - %s', url, c), 3)
     end
     finish = socket.gettime()
     local twitter_token_latency = finish - start
@@ -67,7 +74,7 @@ app:get("/metrics", function()
     finish = socket.gettime()
     local twitter_search_latency = finish - start
     if b == nil or c ~= 200 then
-        push_graylog('ERROR', string.format('%s - %s', url, c), 3)
+        functions.push_graylog('ERROR', string.format('%s - %s', url, c), 3)
     end
 
     total_latency = socket.gettime() - total_latency
@@ -142,7 +149,7 @@ app:get('/fetch', function()
     local url = 'https://%s:%s@api.twitter.com/oauth2/token'
     local b, c, h = https.request(string.format(url, twitter_key, twitter_secret), 'grant_type=client_credentials')
     if b == nil or c ~= 200 then
-        push_graylog('ERROR', string.format('%s - %s', url, c), 3)
+        functions.push_graylog('ERROR', string.format('%s - %s', url, c), 3)
         return { status = 500, json = {message=c}}
     end
     local token = json.decode(b)
@@ -165,7 +172,7 @@ app:get('/fetch', function()
             }
         }
         if b == nil or c ~= 200 then
-            push_graylog('ERROR', string.format('%s - %s', url, c), 3)
+            functions.push_graylog('ERROR', string.format('%s - %s', url, c), 3)
             return { status = 500, json = {message=c}}
         end
         
@@ -175,61 +182,22 @@ app:get('/fetch', function()
             local user = tweet.user
             local query = string.format("INSERT INTO users (id, name, screen_name, followers_count, location) VALUES (%u, '%s', '%s', %u, '%s')",
                 user.id, conn:escape(user.name), conn:escape(user.screen_name), user.followers_count, conn:escape(user.location))
-            insert(query, 105)
+            functions.insert(query, 188, conn)
 
             local created_at = date(tweet.created_at)
             query = string.format("INSERT INTO tweets (id, created_at, user_id, text) VALUES (%u, '%s', %u, '%s')", tweet.id, created_at:fmt('%Y-%m-%d %H:%M:%S'), user.id, conn:escape(tweet.full_text))
-            insert(query, 109)
+            functions.insert(query, 192, conn)
             
             local tags = tweet.entities.hashtags
             for x, tag in pairs(tags) do
                 local tag_text = conn:escape(string.lower(tag.text))
                 query = string.format("INSERT INTO hashtags (id) VALUES ('%s')", tag_text)
-                insert(query, 115)
+                functions.insert(query, 198, conn)
                 query = string.format("INSERT INTO tweets_hashtags (tweet_id, hashtag_id) VALUES (%u, '%s')", tweet.id, tag_text)
-                insert(query, 117)
+                functions.insert(query, 200, conn)
             end
         end
     end
 end)
-
-function insert(query, line)
-    
-    local status, msg = pcall(function()
-        local res = assert (conn:execute(query))
-    end)
-
-    if not status then
-        local level = 4
-        if string.find(msg, 'PRIMARY or UNIQUE KEY') == nil and string.find(msg, 'attempt to store duplicate value') == nil then
-            level = 3
-        end
-        local payload = json.encode({version='1.1', host=hostname, level=level, short_message='QUERY ERROR', full_message=msg, _line=line, _file='app.lua', _query=query, _app='twitter_harvester'})
-        
-        local b, c, h, s = http.request {
-            url = 'http://localhost:12201/gelf',
-            method = 'POST',
-            source = ltn12.source.string(payload),
-            headers = {
-                ["Content-Type"] = "application/json",
-                ["Content-Length"] = payload:len()
-            }       
-        }
-    end
-end
-
-function push_graylog(short_message, full_message, level)
-    
-    local payload = json.encode({version='1.1', host=hostname, level=level, short_message=short_message, full_message=full_message, _file='app.lua', _app='twitter_harvester'})
-    local b, c, h, s = http.request {
-        url = 'http://localhost:12201/gelf',
-        method = 'POST',
-        source = ltn12.source.string(payload),
-        headers = {
-            ["Content-Type"] = "application/json",
-            ["Content-Length"] = payload:len()
-        }       
-    }
-end
 
 return app

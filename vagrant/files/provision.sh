@@ -68,7 +68,7 @@ cat >> /etc/prometheus/prometheus.yml <<'EOF'
     static_configs:
       - targets: ['localhost:8080']
 EOF
-systemctl start prometheus
+systemctl restart prometheus
 systemctl enable prometheus
 
 # Grafana
@@ -79,6 +79,7 @@ cp /vagrant/files/grafana.db.xz /var/lib/grafana
 cd /var/lib/grafana
 rm -rf grafana.db
 xz --decompress grafana.db.xz
+chown grafana: /var/lib/grafana/grafana.db
 systemctl start grafana-server
 systemctl enable grafana-server
 

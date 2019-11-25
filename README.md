@@ -1,6 +1,6 @@
 # Twitter Harvester
 
-Apesar do nome, **Twitter Harvester** é apenas uma exemplo de uma pequena aplicação escrita em [Lua](https://www.lua.org/) e [Vue.js](https://vuejs.org/) que tem como função se conectar ao [Twitter](https://twitter.com/) e extrair os últimos 100 *tweets* e seus usuários com base nas seguintes hashtags:
+Apesar do nome, **Twitter Harvester** é apenas uma exemplo de uma pequena aplicação escrita em [Lua](https://www.lua.org/) com ajuda do framework [Lapis](https://leafo.net/lapis/) e [Vue.js](https://vuejs.org/) que tem como função se conectar ao [Twitter](https://twitter.com/) e extrair os últimos 100 *tweets* e seus usuários com base nas seguintes hashtags:
 
 - openbanking
 - apifirst
@@ -34,6 +34,7 @@ A monitoração é feita pelo [Prometheus](https://prometheus.io/) através da c
 As tecnologias utilizadas neste projeto estão descritas abaixo:
 
 - Lua - https://www.lua.org/
+- Lapis - https://leafo.net/lapis/
 - Firebird - https://firebirdsql.org/
 - OpenResty - https://openresty.org/
 - Vue.js - https://vuejs.org/

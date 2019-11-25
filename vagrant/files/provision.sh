@@ -36,6 +36,10 @@ echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.2 main" > /etc
 apt-get update && apt-get install -y mongodb-org
 systemctl start mongod
 systemctl enable mongod
+tar -xf /vagrant/files/mongo-graylog.tar.xz -C /tmp
+cd /tmp
+mongorestore
+rm -rf /tmp/dump
 
 # Elasticsearch
 wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
@@ -97,12 +101,6 @@ echo "ALTER TABLE tweets ADD CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFE
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_tweet FOREIGN KEY (tweet_id) REFERENCES tweets(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_hashtag FOREIGN KEY (hashtag_id) REFERENCES hashtags(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "CREATE UNIQUE INDEX idx_tweet_hashtag ON tweets_hashtags (tweet_id, hashtag_id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-
-# Adiciona filtro ao Graylog
-mongo graylog --eval 'db.inputs.insert({ "_id" : ObjectId("5dd9ae7a4d7ac153481a7bd5"), "creator_user_id" : "admin", "configuration" : { "idle_writer_timeout" : 60, "recv_buffer_size" : 1048576, "max_chunk_size" : 65536, "tcp_keepalive" : false, "number_worker_threads" : 4, "enable_cors" : true, "tls_client_auth_cert_file" : "", "bind_address" : "0.0.0.0", "tls_cert_file" : "", "decompress_size_limit" : 8388608, "port" : 12201, "tls_key_file" : "", "tls_enable" : false, "tls_key_password" : "", "tls_client_auth" : "disabled", "override_source" : null }, "name" : "GELF HTTP", "created_at" : ISODate("2019-11-24T01:55:08.037Z"), "global" : true, "type" : "org.graylog2.inputs.gelf.http.GELFHttpInput", "title" : "gelf", "content_pack" : null })'
-
-# Adiciona a dashboard ao Graylog
-mongo graylog --evail 'db.dashboards.insert({ "_id" : ObjectId("5ddad80d58bdb33ff3c81d0d"), "creator_user_id" : "admin", "description" : "Dashboard para análise dos logs da aplicação Twitter Harvester", "created_at" : ISODate("2019-11-24T19:20:45.154Z"), "positions" : { "97b04669-d9d1-4076-9fd9-5e29a0854517" : { "width" : 4, "col" : 3, "row" : 1, "height" : 4 }, "e6bfa5b4-4229-4439-a45d-d8df73b532ca" : { "width" : 2, "col" : 1, "row" : 1, "height" : 4 } }, "title" : "Twitter Harvester", "widgets" : [ { "creator_user_id" : "admin", "cache_time" : 10, "description" : "Acessos, Alertas e Erros", "id" : "e6bfa5b4-4229-4439-a45d-d8df73b532ca", "type" : "QUICKVALUES", "config" : { "timerange" : { "type" : "relative", "range" : 0 }, "field" : "level", "query" : "gl2_source_input:5dd9ae7a4d7ac153481a7bd5", "show_data_table" : true, "limit" : 5, "show_pie_chart" : true, "sort_order" : "desc", "stacked_fields" : "", "data_table_limit" : 50 } }, { "creator_user_id" : "admin", "cache_time" : 10, "description" : "Queries", "id" : "97b04669-d9d1-4076-9fd9-5e29a0854517", "type" : "QUICKVALUES", "config" : { "timerange" : { "type" : "relative", "range" : 0 }, "field" : "query", "query" : "gl2_source_input: 5dd9ae7a4d7ac153481a7bd5", "show_data_table" : true, "limit" : 5, "show_pie_chart" : false, "sort_order" : "desc", "stacked_fields" : "", "data_table_limit" : 50 } } ] })'
 
 # Adiciona o target ao Prometheus
 cat >> /etc/prometheus/prometheus.yml <<'EOF'

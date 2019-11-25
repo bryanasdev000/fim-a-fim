@@ -127,7 +127,7 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
-WorkingDirectory = /opt/app
+WorkingDirectory = /opt/app/server
 ExecStart = lapis server
 
 [Install]

@@ -3,7 +3,7 @@
 local http = require("socket.http")
 local inspect = require('inspect')
 
-local payload = string.format('{"version" : "1.1", "host" : "%s", "level" : "4", "short_message" : "Erro ao executar query", "full_message" : "%s", "line" : "93", "file" : "app.lua"}', 'example.com', 'Mensagem de teste da Lua')
+local payload = json.encode({version='1.1', host='example.com', level=6, short_message='Mensagem curta', full_message='Uma grande mensagem qualquer, apenas para ser maior que a outra', _file='app.lua', _app='twitter_harvester'})
 
 local b, c, h, s = http.request {
     url = 'http://localhost:12201/gelf',

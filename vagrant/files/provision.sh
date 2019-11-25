@@ -62,8 +62,25 @@ systemctl enable graylog-server
 
 # Prometheus
 apt-get install -y prometheus
+# Adiciona o target ao Prometheus
+cat >> /etc/prometheus/prometheus.yml <<'EOF'
+  - job_name: twitter_harvester
+    static_configs:
+      - targets: ['localhost:8080']
+EOF
 systemctl start prometheus
 systemctl enable prometheus
+
+# Grafana
+add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -
+apt-get update && apt-get install grafana
+cp /vagrant/files/grafana.db.xz /var/lib/grafana
+cd /var/lib/grafana
+rm -rf grafana.db
+xz --decompress grafana.db.xz
+systemctl start grafana-server
+systemctl enable grafana-server
 
 apt-get clean
 
@@ -101,13 +118,6 @@ echo "ALTER TABLE tweets ADD CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFE
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_tweet FOREIGN KEY (tweet_id) REFERENCES tweets(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_hashtag FOREIGN KEY (hashtag_id) REFERENCES hashtags(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
 echo "CREATE UNIQUE INDEX idx_tweet_hashtag ON tweets_hashtags (tweet_id, hashtag_id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-
-# Adiciona o target ao Prometheus
-cat >> /etc/prometheus/prometheus.yml <<'EOF'
-  - job_name: twitter_harvester
-    static_configs:
-      - targets: ['localhost:8080']
-EOF
 
 cat > /lib/systemd/system/twitter-harvester.service <<EOF
 [Unit]

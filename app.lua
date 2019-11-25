@@ -29,8 +29,11 @@ app:get("/metrics", function()
     local socket = require('socket')
     local total_latency = socket.gettime()
 
+    local graylog_dashboard = assert (config.graylog_dashboard)
+    local graylog_widget = assert (config.graylog_widget)
+
     local start = socket.gettime()
-    local b, c, h, s = http.request('http://admin:admin@localhost:9000/api/dashboards/5ddad80d58bdb33ff3c81d0d/widgets/e6bfa5b4-4229-4439-a45d-d8df73b532ca/value')
+    local b, c, h, s = http.request(string.format('http://admin:admin@localhost:9000/api/dashboards/%s/widgets/%s/value', graylog_dashboard, graylog_widget))
     local graylog = json.decode(b)
     if graylog.result.terms["3"] == nil then
         graylog.result.terms["3"] = 0

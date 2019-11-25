@@ -52,11 +52,11 @@ As tecnologias utilizadas neste projeto estão descritas abaixo:
 
 Existem duas formas de provisionar esta aplicação, uma através do Vagrant e outra através do Docker, e independente da forma escolhida é preciso ter uma **conta de desenvolvedor** no Twitter bem como a **key e o secret** de um *developer app*.
 
-É possível obter uma conta de desenvolvedor gratuitamente através do endereço https://developer.twitter.com/ e então seguir o seguinte tutorial https://developer.twitter.com/en/docs/basics/getting-started para criar uma *developer app*.
+É possível obter uma conta de desenvolvedor gratuitamente através do endereço https://developer.twitter.com/ e então seguir o trecho **How to get started with the Twitter API** do seguinte tutorial https://developer.twitter.com/en/docs/basics/getting-started para criar uma *developer app*.
 
 Este *developer app* servirá para fornecer as credenciais, ou seja, o **token** e o **secret** que aplicação necessita para fazer consultas.
 
-Uma vez com o **token** e o **secret** do *developer app*, basta adicioná-los ao arquivo `config.lua` da raíz do projeto:
+Uma vez que esteja em posse do **token** e o **secret** do *developer app*, basta adicioná-los ao arquivo `config.lua` da raíz do projeto:
 
 ```lua
 config("development", {

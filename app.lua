@@ -42,9 +42,12 @@ app:get("/metrics", function()
     local start = socket.gettime()
     local b, c, h, s = http.request(string.format('http://admin:admin@localhost:9000/api/dashboards/%s/widgets/%s/value', graylog_dashboard, graylog_widget))
     local graylog = json.decode(b)
-    if graylog.result.terms["3"] == nil then
-        graylog.result.terms["3"] = 0
-    end
+
+		for dummy, i in pairs({"3", "4", "6"}) do
+			if graylog.result.terms[i] == nil then
+    	    graylog.result.terms[i] = 0
+    	end
+		end
     local finish = socket.gettime()
     local graylog_latency = finish - start
 

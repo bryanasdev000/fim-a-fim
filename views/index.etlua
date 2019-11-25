@@ -47,6 +47,7 @@
                     <p>A API REST foi desenvolvida com <b><a href="https://leafo.net/lapis/" target="_blank">Lapis</a></b> e possui os seguintes endpoints:</p>
                     <ul>
                         <li>GET - <b>/fetch</b> - Limpa o banco de dados e insere informações atualizadas</li>
+												<li>GET - <b>/metrics</b> - Exibe as métricas quantitativas e de latência para o <b><a href="https://prometheus.io/" target="_blank">Prometheus</a></b></li>
                         <li>GET - <b>/top_five</b> - Busca os cinco usuários com mais seguidores</li>
                         <li>GET - <b>/tweets_by_hour</b> - Lista a quantidade de tweets por hora, independente da hashtag</li>
                         <li>GET - <b>/tweets_by_tag_and_location</b> - Lista os tweets por localização dos usuários e hashtags</li>

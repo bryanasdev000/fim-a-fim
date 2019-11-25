@@ -1,6 +1,6 @@
 # Twitter Harvester
 
-Apesar do nome, **Twitter Harvester** é apenas uma exemplo de uma pequena aplicação escrita em [Lua](https://www.lua.org/) e [Vue.js](https://vuejs.org/) que tem como função se conectar ao [Twitter](https://twitter.com/) e extrair os *tweets* e seus usuários com base nas seguintes hashtags:
+Apesar do nome, **Twitter Harvester** é apenas uma exemplo de uma pequena aplicação escrita em [Lua](https://www.lua.org/) e [Vue.js](https://vuejs.org/) que tem como função se conectar ao [Twitter](https://twitter.com/) e extrair os últimos 100 *tweets* e seus usuários com base nas seguintes hashtags:
 
 - openbanking
 - apifirst
@@ -13,17 +13,17 @@ Apesar do nome, **Twitter Harvester** é apenas uma exemplo de uma pequena aplic
 - raml
 - openapis
 
-Essas informações podem então ser sumarizadas através de uma página em seu navegador.
+Essas informações podem então ser sumarizadas através da interface web.
 
 ## Objetivo
 
-O objetivo é demonstrar que é possível criar aplicações modernas utilizando **Lua**, com ferramentas e conceitos do universo **DevOps**, criando todo o ecossistema responsável pela observabilidade da aplicação.
+O objetivo é demonstrar que é possível criar aplicações modernas utilizando **Lua**, uma linguagem de programação brasileira, com ferramentas e conceitos do universo **DevOps**, garantindo a integração de todo o ecossistema responsável pela observabilidade da aplicação.
 
 ## Resumo
 
 A aplicação funciona através de um servidor baseado em [nginx](https://nginx.org/) chamado [OpenResty](https://openresty.org).
 
-O **backend** é escrito em **Lua** e fornece a estrutura necessária através de uma API REST para um **SPA** escrito em **Vue.js** e estilizado com [BareCSS](https://github.com/longsien/BareCSS). As informações são coletadas do twitter através da chamada `/fetch` e então gravadas em um banco de dados [Firebird](https://firebirdsql.org/).
+O **backend** é escrito em **Lua** e fornece a estrutura necessária através de uma API REST para um **SPA** escrito em **Vue.js** e estilizado com [BareCSS](https://github.com/longsien/BareCSS). As informações são coletadas do Twitter através da chamada `/fetch` e então gravadas em um banco de dados [Firebird](https://firebirdsql.org/).
 
 As ações da aplicação, como seus acessos e seus erros, são logadas diretamente no [Graylog](https://www.graylog.org/) através de [gelf](https://docs.graylog.org/en/3.1/pages/gelf.html).
 
@@ -44,17 +44,19 @@ As tecnologias utilizadas neste projeto estão descritas abaixo:
 - Vagrant - https://www.vagrantup.com/
 - Docker - https://www.docker.com/docker-community
 - MongoDB - https://www.mongodb.com/ - Exigência do Graylog*
-- Elasticsearch - https://www.elastic.co/products/elastic-stack - Exigência do Graylog*
+- Elasticsearch - https://www.elastic.co/products/elasticsearch - Exigência do Graylog*
 
 **Obs:** A box configurada no Vagrantfile é um [Debian](https://www.debian.org/) 10.
 
 # Como utilizar
 
-Existem duas formas de provisionar esta aplicação, uma através do Vagrant e outra através do Docker, e independente da forma escolhida é preciso ter uma **conta de desenvolvedor** no Twitter bem como a **key e o secret** de um aplicativo .
+Existem duas formas de provisionar esta aplicação, uma através do Vagrant e outra através do Docker, e independente da forma escolhida é preciso ter uma **conta de desenvolvedor** no Twitter bem como a **key e o secret** de um *developer app*.
 
-É possível obter uma conta de desenvolvedor gratuitamente através do endereço https://developer.twitter.com/ e então seguir o seguinte tutorial para criar uma *developer app* https://developer.twitter.com/en/docs/basics/getting-started. Este *developer app* servirá para fornecer as credenciais, ou seja, o **token** e o **secret** que aplicação necessita para fazer consultas.
+É possível obter uma conta de desenvolvedor gratuitamente através do endereço https://developer.twitter.com/ e então seguir o seguinte tutorial https://developer.twitter.com/en/docs/basics/getting-started para criar uma *developer app*.
 
-Uma vez que tenha obtido o **token** e o **secret** do Twitter, basta adicioná-los ao arquivo `config.lua` da raíz do projeto:
+Este *developer app* servirá para fornecer as credenciais, ou seja, o **token** e o **secret** que aplicação necessita para fazer consultas.
+
+Uma vez com o **token** e o **secret** do *developer app*, basta adicioná-los ao arquivo `config.lua` da raíz do projeto:
 
 ```lua
 config("development", {
@@ -77,7 +79,7 @@ Abra o terminal e clone o projeto:
 git clone https://github.com/hector-vido/fim-a-fim.git twitter-harvester
 ```
 
-Entre dentro do diretório `twitter-harvester/vagrant` e inicie o provisionamento:
+Entre no diretório `twitter-harvester/vagrant` e inicie o provisionamento:
 
 ```
 cd twitter-harvester/vagrant

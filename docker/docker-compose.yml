@@ -10,6 +10,13 @@ services:
     - './../:/opt/app/'
     ports:
     - '8080:8080'
+  firebird:
+    image: jacobalberty/firebird:3.0.4
+    environment:
+      ISC_PASSWORD: 'firebird'
+      FIREBIRD_USER: 'app'
+      FIREBIRD_PASSWORD: 'zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J'
+      FIREBIRD_DATABASE: 'luafirebird.fdb'
   graylog:
     image: graylog/graylog:3.1.3
     environment:

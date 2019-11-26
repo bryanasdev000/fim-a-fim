@@ -26,9 +26,9 @@ apt-get install -y vim git lua5.1 luarocks lua-inspect liblua5.1-dev firebird-de
 apt-get clean
 
 # OpenResty
-wget -O - https://openresty.org/package/pubkey.gpg | sudo apt-key add -
-sudo add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc) openresty"
-sudo apt-get update && apt-get -y install openresty
+wget -O - https://openresty.org/package/pubkey.gpg | apt-key add -
+add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc) openresty"
+apt-get update && apt-get -y install openresty
 
 # MongoDB
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -

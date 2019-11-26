@@ -20,7 +20,7 @@ functions.insert = function(query, line, conn)
         local payload = json.encode({version='1.1', host=functions.hostname, level=level, short_message='QUERY ERROR', full_message=msg, _line=line, _file='app.lua', _query=query, _app='twitter_harvester'})
         
         local b, c, h, s = http.request {
-            url = 'http://localhost:12201/gelf',
+            url = string.format('http://%s:%s/%s', os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_PORT'), os.getenv('GRAYLOG_INPUT')),
             method = 'POST',
             source = ltn12.source.string(payload),
             headers = {
@@ -35,7 +35,7 @@ functions.push_graylog = function(short_message, full_message, level)
     
     local payload = json.encode({version='1.1', host=functions.hostname, level=level, short_message=short_message, full_message=full_message, _file='app.lua', _app='twitter_harvester'})
     local b, c, h, s = http.request {
-        url = 'http://localhost:12201/gelf',
+        url = string.format('http://%s:%s/%s', os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_PORT'), os.getenv('GRAYLOG_INPUT')),
         method = 'POST',
         source = ltn12.source.string(payload),
         headers = {

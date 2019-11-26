@@ -6,10 +6,24 @@ services:
     build: 
       context: './../'
       dockerfile: './docker/Dockerfile'
+    environment:
+      FIREBIRD_HOST: firebird
+      FIREBIRD_USER: app
+      FIREBIRD_PASSWORD: zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J
+      FIREBIRD_DATABASE: luafirebird.fdb
+      GRAYLOG_HOST: graylog
+      GRAYLOG_PORT: 12201
+      GRAYLOG_USER: admin
+      GRAYLOG_DASHBOARD: 5ddb2b3ba048ab3fe5563fbd
+      GRAYLOG_WIDGET: 2a2d492e-500c-4d86-9ce2-3378fe7a9ba0
+      GRAYLOG_PASSWORD: admin
+      GRAYLOG_INPUT: gelf 
     volumes:
     - './../:/opt/app/'
+    - './../server/nginx.conf.compiled:/usr/local/openresty/nginx/conf/nginx.conf'
     ports:
     - '8080:8080'
+    command: openresty
   firebird:
     image: jacobalberty/firebird:3.0.4
     environment:

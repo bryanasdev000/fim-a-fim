@@ -18,7 +18,7 @@ app:before_filter(function(self)
 	functions.push_graylog('INFO', 'Acceso ao endpoint ' .. self.req.parsed_url.path, 6)
 	local status, msg = pcall(function()
 		env = assert (driver.firebird())
-		conn = assert (env:connect('localhost:/var/lib/firebird/3.0/data/luafirebird.fdb', 'app', 'zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J'))
+		conn = assert (env:connect(string.format('%s:%s', os.getenv('FIREBIRD_HOST'), os.getenv('FIREBIRD_DATABASE')), os.getenv('FIREBIRD_USER'), os.getenv('FIREBIRD_PASSWORD')))
 		conn:setautocommit(true)
 	end)
 	if not status then
@@ -36,11 +36,12 @@ app:get("/metrics", function()
     local socket = require('socket')
     local total_latency = socket.gettime()
 
-    local graylog_dashboard = assert (config.graylog_dashboard)
-    local graylog_widget = assert (config.graylog_widget)
+    local graylog_dashboard = assert (os.getenv('GRAYLOG_DASHBOARD'))
+    local graylog_widget = assert (os.getenv('GRAYLOG_WIDGET'))
 
     local start = socket.gettime()
-    local b, c, h, s = http.request(string.format('http://admin:admin@localhost:9000/api/dashboards/%s/widgets/%s/value', graylog_dashboard, graylog_widget))
+    local b, c, h, s = http.request(string.format('http://%s:%s@%s:9000/api/dashboards/%s/widgets/%s/value', os.getenv('GRAYLOG_USER'), os.getenv('GRAYLOG_PASSWORD'), os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_DASHBOARD'), os.getenv('GRAYLOG_WIDGET')))
+    print(string.format('http://%s:%s@%s:9000/api/dashboards/%s/widgets/%s/value', os.getenv('GRAYLOG_USER'), os.getenv('GRAYLOG_PASSWORD'), os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_DASHBOARD'), os.getenv('GRAYLOG_WIDGET')))
     local graylog = json.decode(b)
 
 		for dummy, i in pairs({"3", "4", "6"}) do

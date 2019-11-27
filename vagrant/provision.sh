@@ -87,6 +87,7 @@ systemctl enable grafana-server
 apt-get clean
 
 # Dependências da aplicação
+echo '127.0.0.1 firebird' >> /etc/hosts
 luarocks install luasql-firebird
 luarocks install lua-cjson 2.1.0-1
 luarocks install date
@@ -104,36 +105,19 @@ rm /usr/local/openresty/openssl/lib/libcrypto.so.1.1 /usr/local/openresty/openss
 cp /usr/src/openssl/libcrypto.so.1.1 /usr/local/openresty/openssl/lib/libcrypto.so.1.1
 cp /usr/src/openssl/libssl.so.1.1 /usr/local/openresty/openssl/lib/libssl.so.1.1
 
+# Firebird
+sed -i 's/RemoteBindAddress = localhost//' firebird.conf
+sed -i 's,# DatabaseAccess = Full,DatabaseAccess = Restrict /var/lib/firebird/3.0/data/,' /etc/firebird/3.0/firebird.conf
 systemctl stop firebird3.0
 
 echo "CREATE USER app PASSWORD '$APP_PASSWORD';" | isql-fb -u sysdba -p "$SYSDBA_PASSWORD" /var/lib/firebird/3.0/system/security3.fdb
 echo "CREATE DATABASE '/var/lib/firebird/3.0/data/luafirebird.fdb';" | isql-fb -u app -p "$APP_PASSWORD" /var/lib/firebird/3.0/system/security3.fdb
-chown firebird: /var/lib/firebird/3.0/data/luafirebird.fdb
+chown firebird: /opt/app/luafirebird.fdb
+
+eval $(head -n12 /opt/app/server/nginx.conf.vagrant | sed 's/env /export /' | sed "s/=/='/" | sed "s/;/';/")
+lua /opt/app/migration.lua
+
+cp /opt/app/server/nginx.conf.vagrant /etc/openresty/nginx.conf
 
 systemctl start firebird3.0
-
-echo "CREATE TABLE tweets (id BIGINT NOT NULL PRIMARY KEY, created_at TIMESTAMP NOT NULL, user_id BIGINT NOT NULL, text VARCHAR(500) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE TABLE users (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(100) NOT NULL, followers_count INT NOT NULL, screen_name VARCHAR(50) NOT NULL, location VARCHAR(100) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE TABLE hashtags (id VARCHAR(50) NOT NULL PRIMARY KEY);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE TABLE tweets_hashtags (tweet_id BIGINT NOT NULL, hashtag_id VARCHAR(50) NOT NULL);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "ALTER TABLE tweets ADD CONSTRAINT fk_tweet_user FOREIGN KEY (user_id) REFERENCES users(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_tweet FOREIGN KEY (tweet_id) REFERENCES tweets(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "ALTER TABLE tweets_hashtags ADD CONSTRAINT fk_th_hashtag FOREIGN KEY (hashtag_id) REFERENCES hashtags(id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-echo "CREATE UNIQUE INDEX idx_tweet_hashtag ON tweets_hashtags (tweet_id, hashtag_id);" | isql-fb -u app -p "$APP_PASSWORD" localhost:/var/lib/firebird/3.0/data/luafirebird.fdb
-
-cat > /lib/systemd/system/twitter-harvester.service <<EOF
-[Unit]
-Description = Inicia o servidor Openresty para o Twitter Harvester
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-WorkingDirectory = /opt/app/server
-ExecStart = lapis server
-
-[Install]
-WantedBy = multi-user.target
-EOF
-
-systemctl start twitter-harvester
-systemctl enable twitter-harvester
+systemctl restart openresty

@@ -1,0 +1,47 @@
+env LAPIS_ENVIRONMENT=development;
+env FIREBIRD_HOST=firebird;
+env FIREBIRD_USER=app;
+env FIREBIRD_PASSWORD=zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J;
+env FIREBIRD_DATABASE=luafirebird.fdb;
+env GRAYLOG_HOST=graylog;
+env GRAYLOG_PORT=12201;
+env GRAYLOG_USER=admin;
+env GRAYLOG_DASHBOARD=5ddb2b3ba048ab3fe5563fbd;
+env GRAYLOG_WIDGET=2a2d492e-500c-4d86-9ce2-3378fe7a9ba0;
+env GRAYLOG_PASSWORD=admin;
+env GRAYLOG_INPUT=gelf;
+
+worker_processes 1;
+error_log stderr notice;
+pid logs/nginx.pid;
+
+events {
+  worker_connections 1024;
+}
+
+http {
+  include mime.types;
+  lua_package_path "/opt/app/?.lua;/usr/share/lua/5.1/?.lua;/usr/share/lua/5.1/lapis/?.lua;;";
+  lua_package_cpath "/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;;";
+
+  server {
+    listen 8080;
+    lua_code_cache off;
+    root /opt/app/;
+
+    location / {
+      default_type text/html;
+      content_by_lua '
+        require("lapis").serve("app")
+      ';
+    }
+
+    location /static/ {
+      # somente para ignorar como endpoint 
+    }
+
+    location /favicon.ico {
+      alias /static/favicon.ico;
+    }
+  }
+}

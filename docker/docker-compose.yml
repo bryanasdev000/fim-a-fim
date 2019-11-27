@@ -29,7 +29,7 @@ services:
       GRAYLOG_INPUT: gelf 
     volumes:
     - './../:/opt/app/'
-    - './../server/nginx.conf.compiled:/usr/local/openresty/nginx/conf/nginx.conf'
+    - './../server/nginx.conf.docker:/usr/local/openresty/nginx/conf/nginx.conf'
     - './migration.sh:/migration.sh'
     ports:
     - '8080:8080'
@@ -45,7 +45,7 @@ services:
     volumes:
     - mongodb:/data/db
     - ./mongo-restore.sh:/docker-entrypoint-initdb.d/mongo-restore.sh
-    - ./../vagrant/files/mongo-graylog.tar.gz:/tmp/mongo-graylog.tar.gz
+    - ./../dumps/mongo-graylog.tar.gz:/tmp/mongo-graylog.tar.gz
   elasticsearch:
     image: elasticsearch:6.8.5
     environment:
@@ -81,7 +81,7 @@ services:
     - /grafana-restore.sh
     volumes:
     - grafana:/var/lib/grafana
-    - ./../vagrant/files/grafana.db.gz:/var/lib/grafana/grafana.db.gz
+    - ./../dumps/grafana.db.gz:/var/lib/grafana/grafana.db.gz
     - ./grafana-restore.sh:/grafana-restore.sh
     ports:
     - '3000:3000'

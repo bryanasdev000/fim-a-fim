@@ -1,6 +1,4 @@
-.env
 .vagrant
 *.dia~
 config.lua
-logs
 *.swp

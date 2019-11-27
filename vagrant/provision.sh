@@ -29,6 +29,9 @@ apt-get clean
 wget -O - https://openresty.org/package/pubkey.gpg | apt-key add -
 add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc) openresty"
 apt-get update && apt-get -y install openresty
+cp /opt/app/server/nginx.conf.vagrant /etc/openresty/nginx.conf
+systemctl enable openresty
+systemctl restart openresty
 
 # MongoDB
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
@@ -117,7 +120,5 @@ chown firebird: /opt/app/luafirebird.fdb
 eval $(head -n12 /opt/app/server/nginx.conf.vagrant | sed 's/env /export /' | sed "s/=/='/" | sed "s/;/';/")
 lua /opt/app/migration.lua
 
-cp /opt/app/server/nginx.conf.vagrant /etc/openresty/nginx.conf
-
 systemctl start firebird3.0
-systemctl restart openresty
+systemctl enable firebird3.0

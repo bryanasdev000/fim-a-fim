@@ -36,7 +36,7 @@ echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.2 main" > /etc
 apt-get update && apt-get install -y mongodb-org
 systemctl start mongod
 systemctl enable mongod
-tar -xf /vagrant/files/mongo-graylog.tar.gz -C /tmp
+tar -xf /opt/app/dumps/mongo-graylog.tar.gz -C /tmp
 cd /tmp
 mongorestore
 rm -rf /tmp/dump
@@ -72,10 +72,11 @@ systemctl restart prometheus
 systemctl enable prometheus
 
 # Grafana
+echo '127.0.0.1 prometheus' >> /etc/hosts
 add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
 wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -
 apt-get update && apt-get install grafana
-cp /vagrant/files/grafana.db.xz /var/lib/grafana
+cp /opt/app/dumps/grafana.db.gz /var/lib/grafana
 cd /var/lib/grafana
 rm -rf grafana.db
 gunzip grafana.db.gz

@@ -1,5 +1,5 @@
 #!/bin/bash
 
 cd /var/lib/grafana/
-gunzip grafana.db.gz
+gunzip -k grafana.db.gz
 exec /run.sh

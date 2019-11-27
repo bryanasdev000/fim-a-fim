@@ -40,8 +40,13 @@ app:get("/metrics", function()
     local graylog_widget = assert (os.getenv('GRAYLOG_WIDGET'))
 
     local start = socket.gettime()
-    local b, c, h, s = http.request(string.format('http://%s:%s@%s:9000/api/dashboards/%s/widgets/%s/value', os.getenv('GRAYLOG_USER'), os.getenv('GRAYLOG_PASSWORD'), os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_DASHBOARD'), os.getenv('GRAYLOG_WIDGET')))
-    print(string.format('http://%s:%s@%s:9000/api/dashboards/%s/widgets/%s/value', os.getenv('GRAYLOG_USER'), os.getenv('GRAYLOG_PASSWORD'), os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_DASHBOARD'), os.getenv('GRAYLOG_WIDGET')))
+    local b, c, h, s = http.request(
+			string.format('http://%s:%s@%s:9000/api/dashboards/%s/widgets/%s/value',
+			os.getenv('GRAYLOG_USER'),
+			os.getenv('GRAYLOG_PASSWORD'),
+			os.getenv('GRAYLOG_HOST'),
+			os.getenv('GRAYLOG_DASHBOARD'),
+			os.getenv('GRAYLOG_WIDGET')))
     local graylog = json.decode(b)
 
 		for dummy, i in pairs({"3", "4", "6"}) do

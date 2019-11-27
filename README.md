@@ -257,11 +257,33 @@ Com base nestes dados coletados, uma pequena *dashboard* foi criada dentro do Gr
 
 # Acessando o Graylog
 
+Uma *view* foi gerada no Graylog para facilitar a busca dos últimos erros. Esta *view* retorna apenas as mensagens consideradas realmente importantes, como erro, crítico, alerta e emergência:
+
+```
+app:twitter_harvester AND level:<=3
+```
 
 ![Graylog View](/docs/graylog/view.png "Visualização dos Últimos Logs")
+
+Este *dashboard* apresenta a quantidade de queries e chamadas que geraram logs relacionados a problemas, além da contagem de acessos:
 
 ![Graylog Dashboard](/docs/graylog/dashboard.png "Visualização do Sumário de Requisições, Avisos e Errors")
 
 # Acessando o Grafana
 
+Nesta *dashboard* apresenta em sua parte superior 3 medições, que neste momento foram limitadas aos últimos 15 minutos:
+
+1. Média da quantidade de erros durante a inserção dos dados ou consulta do Twitter
+2. Média da quantidade de avisos durante a inserção dos dados, chaves repetidas e etc.
+3. Média dos acessos realizados na API
+
+O segundo item, na parte inferior demonstra as diferentes latências da aplicação, a legenda não aparece na foto devido a resolução utilizada:
+
+- Verde - A latência total da chamada
+- Amarelo - A latência da chamada ao Graylog
+- Laranja - A latência da obtenção do token de acesso do Twitter
+- Azul - A latência da busca de 1 único Tweet
+
 ![Dashboard Grafana](/docs/grafana/dashboard.png "Visualização do Estado Geral")
+
+> Esta *dashboard* precisa ser ajustada para fornecer um alerta em relação aos erros

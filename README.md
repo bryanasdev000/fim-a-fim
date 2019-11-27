@@ -202,7 +202,7 @@ Ao chamar o endpoint **/fetch** ou mesmo clicar em **Fetch** na interface web - 
 
 ## Banco de Dados
 
-O banco de dados é um Firebird relacional, durante a fase de cadastro centenas de campos são descartados e somente os necessários são inseridos, diminuindo a carga de trabalho e armazenamento.
+O banco de dados é um Firebird, relacional. Durante a fase de cadastro centenas de campos são descartados e somente os necessários são inseridos, diminuindo a carga de trabalho e armazenamento.
 
 A estrutura do banco é a seguinte:
 
@@ -210,4 +210,51 @@ A estrutura do banco é a seguinte:
 
 # Logging
 
+Durante a execução, a aplicação envia seus logs de acessos, avisos e erros para o **Graylog** através de pequenas chamadas como:
+
+```lua
+local b, c, h, s = http.request {
+    url = string.format('http://%s:%s/%s', os.getenv('GRAYLOG_HOST'), os.getenv('GRAYLOG_PORT'), os.getenv('GRAYLOG_INPUT')),
+    method = 'POST',
+    source = ltn12.source.string(payload),
+    headers = {
+        ["Content-Type"] = "application/json",
+        ["Content-Length"] = payload:len()
+    }       
+}
+```
+
+As variáveis de ambiente utilizadas são autoexplicativas, com excessão da `GRAYLOG_INPUT` que faz referência ao tipo de captura criado dentro do **Graylog**.
+
 # Monitoramento
+
+O monitoramento é feito pelo **Prometheus** de 15 em 15 segundos através do endpoint **/metrics**, a chamada deste *endpoint* implica em alguns passos:
+
+1. Uma busca dos dados históricos de acesso do Graylog é realizada
+2. A latência dessa busca é calculada
+3. É cálculado a latência de obtenção do token de acesso do Twitter
+4. Também é calculado a latência da obtenção de 1 registro da busca de Tweets
+5. A latência total é calculada
+6. Os dados são retornados
+
+Os dados retornados tem o seguinte formato:
+
+```
+# HELP twitter_harverster_stats by type
+# TYPE twitter_harvester_stats counter
+twitter_harvester_stats{type="error"} 0
+twitter_harvester_stats{type="warning"} 0
+twitter_harvester_stats{type="access"} 2
+# HELP twitter_harvester_latency shows latency of various internal calls
+# TYPE twitter_harvester_latency gauge
+twitter_harvester_latency{name="graylog"} 0.004
+twitter_harvester_latency{name="twitter_token"} 0.197
+twitter_harvester_latency{name="twitter_search"} 0.226
+twitter_harvester_latency{name="api"} 0.427
+```
+
+Com base nestes dados coletados, uma pequena *dashboard* foi criada dentro do Grafana para facilitar a visualização.
+
+# Acessando o Graylog
+
+# Acessando o Grafana

@@ -255,7 +255,7 @@ twitter_harvester_latency{name="api"} 0.427
 
 Com base nestes dados coletados, uma pequena *dashboard* foi criada dentro do Grafana para facilitar a visualização.
 
-# Acessando o Graylog
+# Graylog
 
 Uma *view* foi gerada no Graylog para facilitar a busca dos últimos erros. Esta *view* retorna apenas as mensagens consideradas realmente importantes, como erro, crítico, alerta e emergência:
 
@@ -269,7 +269,7 @@ Este *dashboard* apresenta a quantidade de queries e chamadas que geraram logs r
 
 ![Graylog Dashboard](/docs/graylog/dashboard.png "Visualização do Sumário de Requisições, Avisos e Errors")
 
-# Acessando o Grafana
+# Grafana
 
 Nesta *dashboard* apresenta em sua parte superior 3 medições, que neste momento foram limitadas aos últimos 15 minutos:
 
@@ -286,4 +286,4 @@ O segundo item, na parte inferior demonstra as diferentes latências da aplicaç
 
 ![Dashboard Grafana](/docs/grafana/dashboard.png "Visualização do Estado Geral")
 
-> Esta *dashboard* precisa ser ajustada para fornecer um alerta em relação aos erros
+> Esta *dashboard* precisa ser ajustada para fornecer a cor vermelha do erro somente quando existir, da forma atual não existe troca de estado, o que torna o painel, de certa forma, ineficiente.

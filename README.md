@@ -95,9 +95,9 @@ Ao término do provisionamento, a aplicação poderá ser acessada através do e
 
 As outras ferramentas podem ser acessadas nos seguintes endereços:
 
-- *Graylog* - http://192.168.33.10:9000
+- *Graylog* - http://192.168.33.10:9000 usuário **admin** e senha **admin**
 - *Prometheus* - http://192.168.33.10:9090
-- *Grafana* - http://192.168.33.10:3000
+- *Grafana* - http://192.168.33.10:3000 usuário **admin** e senha **admin**
 
 ## Docker
 
@@ -118,9 +118,9 @@ Ao término do provisionamento, a aplicação poderá ser acessada através do e
 
 As outras ferramentas podem ser acessadas nos seguintes endereços:
 
-- *Graylog* - http://localhost:9000
+- *Graylog* - http://localhost:9000 usuário **admin** e senha **admin**
 - *Prometheus* - http://localhost:9090
-- *Grafana* - http://localhost:3000
+- *Grafana* - http://localhost:3000 usuário **admin** e senha **admin**
 
 # Sobre o Provisionamento
 

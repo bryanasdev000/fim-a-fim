@@ -63,22 +63,24 @@ Uma vez que esteja em posse do **token** e o **secret** do *developer app*, bast
 config("development", {
         tw_key = 'minha key',
         tw_secret = 'meu secret',
-        graylog_dashboard = '5ddb2b3ba048ab3fe5563fbd',
-        graylog_widget = '2a2d492e-500c-4d86-9ce2-3378fe7a9ba0'
 })
 ```
 
-Os valores referentes ao Graylog não precisam ser alterados pois esses identificadores estão fixados no banco de dados que será restaurado durante o provisionamento.
+## Obter os Arquivos
 
-## Vagrant
-
-Caso o vagrant não esteja instalado em sua máquina, é possível encontrar instruções de instalação em https://www.vagrantup.com/downloads.html.
+Se você não possui o git, as instruções de instalação podem ser encontradas em https://git-scm.com/book/en/v2/Getting-Started-Installing-Git.
 
 Abra o terminal e clone o projeto:
 
 ```bash
 git clone https://github.com/hector-vido/fim-a-fim.git twitter-harvester
 ```
+
+Existem duas formas de provisionar o ambiente, um deles é com uma máquina virtual - **Vagrant** - e o outro através de contêineres - **Docker**. Veja abaixo qual a opção que mais lhe agrada, ambas são iguais em resultado.
+
+## Vagrant
+
+Caso o vagrant não esteja instalado em sua máquina, é possível encontrar instruções de instalação em https://www.vagrantup.com/downloads.html.
 
 Entre no diretório `twitter-harvester/vagrant` e inicie o provisionamento:
 
@@ -91,4 +93,56 @@ vagrant up
 
 Ao término do provisionamento, a aplicação poderá ser acessada através do endereço http://192.168.33.10:8080.
 
+As outras ferramentas podem ser acessadas nos seguintes endereços:
+
+- *Graylog* - http://192.168.33.10:9000
+- *Prometheus* - http://192.168.33.10:9090
+- *Grafana* - http://192.168.33.10:3000
+
 ## Docker
+
+Caso o Docker não esteja instalado em sua máquina, é possível encontrar instruções de instalação para o Linux em https://docs.docker.com/install/ e para o Windows em https://docs.docker.com/docker-for-windows/install/.
+
+Além do Docker, a ferramenta **docker-compose** é necessária para provisionar o ambiente, as instruções para instalação pode ser encontrada em https://docs.docker.com/compose/install/.
+
+Entre no diretório `twitter-harvester/docker` e inicie o provisionamento:
+
+```
+cd twitter-harvester/docker
+docker-compose up
+```
+
+**Obs:** Levará algum tempo, pois a imagem do **twitter-harvester** será criada em sua máquina, dinâmicamente através do Dockerfile presente em `twitter-harvester/docker`.
+
+Ao término do provisionamento, a aplicação poderá ser acessada através do endereço http://localhost:8080.
+
+As outras ferramentas podem ser acessadas nos seguintes endereços:
+
+- *Graylog* - http://localhost:9000
+- *Prometheus* - http://localhost:9090
+- *Grafana* - http://localhost:3000
+
+# Sobre o Provisionamento
+
+Independente da forma escolhida para o provisionamento, em nenhum dos casos será necessário executar um passo extra, a aplicação estará pronta e todas as ferramentas conectadas.
+
+- O banco de dados **Firebird** da aplicação é criado através do script `twitter-harvester/migration.lua`.
+- Para a ferramenta **Graylog** um *dump* do MongoDB foi extraído em `twitter-harvester/dumps/mongo-graylog.tar.gz` e acompanha o repositório.
+- No caso do **Grafana**, uma cópia do SQLite foi extraída para `twitter-harvester/dumps/grafana.db.gz` e acompanha o repositório. O dashboard utilizado também pode ser encontrado em `twitter-harvester/docs/grafana/twitter-harvester.json`.
+- O arquivo de configuração do **Prometheus** pode ser encontrado em `twitter-harvester/docs/prometheus/prometheus.yml`
+
+Para ambos os casos, a biblioteca OpenSSL 1.1.1 precisou ser compilada e copiada para os diretórios do OpenResty.
+
+## Provisionamento através do Vagrant
+
+O provisionamento do **Vagrant** é bastante direto, e pode ser observado através do único arquivo `twitter-harvester/vagrant/provision.sh`.
+
+As ferramentas são instaladas em sequência, juntamente com a restauração dos *dumps* de cada banco, uma série de substituições com `sed` são realizadas, de modo a configurar os arquivos conforme a necessidade. Logo no início, a senha padrão para o Firebird é configurada em `/etc/firebird/3.0/SYSDBA.password`.
+
+Os hostnames `prometheus` e `firebird` foram adicionados ao `/etc/hosts` para facilitar a padronização dos arquivos de configuração.
+
+## Provisionamento através do Docker
+
+O provisionamento do **Docker** é um pouco mais complexo apesar do *compose-file* não ser tão extenso. Os contêineres **app**, **mongodb** e **grafana** tiveram suas diretivas `command` e/ou `entrypoint` alteradas para executarem seus respectivos arquivos no diretório `twitter-harvester/docker`, são eles `migration.sh`,  `mongo-restore.sh` e `grafana-restore.sh`.
+
+O `*Dockerfile* pode assustar um pouco e utiliza uma técnica conhecida como *multi-stage building*, que neste caso descarta a camada de compilação da dependência `luasql-firebird` e `OpenSSL 1.1.1`, aproveitando apenas os binários resultantes, tornando a imagem considerávelmente menor.

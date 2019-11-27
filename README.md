@@ -139,7 +139,7 @@ O provisionamento do **Vagrant** é bastante direto, e pode ser observado atrav�
 
 Logo no início, a senha padrão para o Firebird é configurada em `/etc/firebird/3.0/SYSDBA.password`. As ferramentas são instaladas em sequência, juntamente com a restauração dos *dumps* de cada banco. Uma série de substituições com `sed` são realizadas, de modo a configurar os arquivos conforme a necessidade.
 
-Os hostnames `prometheus` e `firebird` foram adicionados ao `/etc/hosts` para facilitar a padronização dos arquivos de configuração, fazendo com que a aplicação e o Grafana encontrem seus respectivos destinos.
+Os hostnames `prometheus`, `graylog` e `firebird` foram adicionados ao `/etc/hosts` para facilitar a padronização dos arquivos de configuração, fazendo com que a aplicação e o Grafana encontrem seus respectivos destinos.
 
 ## Provisionamento através do Docker
 
@@ -151,10 +151,63 @@ O *Dockerfile* pode assustar um pouco e utiliza uma técnica conhecida como *mul
 
 A aplicação expõe uma API muito simples com 5 *endpoints*:
 
-- GET - */fetch* - Limpa o banco de dados e insere informações atualizadas com base em uma nova pesquisa no Twitter.
-- GET - */metrics* - Um exportador do Prometheus criado especialmente para a aplicação, exibe as métricas quantitativas e de latência.
-- GET - */top_five* - Exibe os cinco usuários com mais seguidores com base nos dados salvos pela busca feita anteriormente por **/fetch**.
-- GET - */tweets_by_hour* - Lista a quantidade de tweets por hora, independente da hashtag com base nos dados salvos pela busca feita anteriormente por **/fetch**.
-- GET - */tweets_by_tag_and_location* - Lista os tweets por localização dos usuários e hashtags base nos dados salvos pela busca feita anteriormente por **/fetch**.
+- GET - **/fetch** - Limpa o banco de dados e insere informações atualizadas com base em uma nova pesquisa no Twitter.
+- GET - **/metrics** - Um exportador do Prometheus criado especialmente para a aplicação, exibe as métricas quantitativas e de latência.
+- GET - **/top_five** - Exibe os cinco usuários com mais seguidores com base nos dados salvos pela busca feita anteriormente por **/fetch**.
+- GET - **/tweets_by_hour** - Lista a quantidade de tweets por hora, independente da hashtag com base nos dados salvos pela busca feita anteriormente por **/fetch**.
+- GET - **/tweets_by_tag_and_location** - Lista os tweets por localização dos usuários e hashtags base nos dados salvos pela busca feita anteriormente por **/fetch**.
 
 Todos os *endpoints* retornam o formato *application/json* com excessão do **/metrics** que por exigência do Prometheus retorna o formato *text*.
+
+# Arquitetura
+
+A arquitetura consiste-se de um backend escrito em **Lua** juntamente com um front-end desenvolvido em **Vue.js**.
+O SGDB utilizado é um **Firebird**, e exige uma séria consistência de dados através de constraints.
+
+Os logs da aplicação são enviados diretamente para o **Graylog**, e as métricas são recolhidas pelo **Prometheus**.
+
+## Backend
+
+O backend, escrito em **Lua** com a utilização do framework **Lapis**, funciona através de um *webserver* chamado **OpenResty**. Através de uma série de variáveis de ambiente configuradas em `/etc/openresty/nginx.conf` a aplicação consegue localizar e se comunicar com o banco de dados **Firebird** e o centralizador de logs **Graylog**.
+
+As variáveis são as seguintes:
+
+```ini
+env FIREBIRD_HOST=firebird;
+env FIREBIRD_USER=app;
+env FIREBIRD_PASSWORD=zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J;
+env FIREBIRD_DATABASE=luafirebird.fdb;
+env GRAYLOG_HOST=graylog;
+env GRAYLOG_PORT=12201;
+env GRAYLOG_USER=admin;
+env GRAYLOG_DASHBOARD=5ddb2b3ba048ab3fe5563fbd;
+env GRAYLOG_WIDGET=2a2d492e-500c-4d86-9ce2-3378fe7a9ba0;
+env GRAYLOG_PASSWORD=admin;
+env GRAYLOG_INPUT=gelf;
+```
+
+Através de um arquivo de configuração com a **key** e o **token** obtidos através do Twitter localizado em `/opt/app/config.lua` a aplicação consegue fazer uma busca por tags específicas - *vide início do documento* - puxando no máximo 100 registros para cada hashtag, separando e gravando estes registros no banco de dados.
+
+A obtenção dos dados é descrita mais abaixo.
+
+## Frontend
+
+O front-end é desenvolvido em **Vue.js**, e pode ser acessado consultando a raíz da aplicação em `/`. Trata-se de um SAP - Single Page Application - extremamente simples que utiliza-se de requisições em background através da biblioteca **axion** para garantir uma melhor fluidez da interface.
+
+A estilização é feita por um conjunto CSS **classless** conhecido como **BareCSS**.
+
+## Obtenção dos Dados - Harvesting
+
+Ao chamar o endpoint **/fetch** ou mesmo clicar em **Fetch** na interface web - sendo que esta última apresenta uma confirmação - o backend limpará o banco e fará uma nova busca no Twitter, preenchendo as tabelas com novos dados.
+
+## Banco de Dados
+
+O banco de dados é um Firebird relacional, durante a fase de cadastro centenas de campos são descartados e somente os necessários são inseridos, diminuindo a carga de trabalho e armazenamento.
+
+A estrutura do banco é a seguinte:
+
+![DER](/docs/der.svg "Diagrama de Entidade Relacionamento")
+
+# Logging
+
+# Monitoramento

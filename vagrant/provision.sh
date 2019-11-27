@@ -51,6 +51,7 @@ systemctl start elasticsearch
 systemctl enable elasticsearch
 
 # Graylog
+echo '127.0.0.1 graylog' >> /etc/hosts
 wget https://packages.graylog2.org/repo/packages/graylog-3.1-repository_latest.deb
 dpkg -i graylog-3.1-repository_latest.deb
 apt-get update

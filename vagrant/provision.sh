@@ -31,7 +31,6 @@ add-apt-repository -y "deb http://openresty.org/package/debian $(lsb_release -sc
 apt-get update && apt-get -y install openresty
 cp /opt/app/server/nginx.conf.vagrant /etc/openresty/nginx.conf
 systemctl enable openresty
-systemctl restart openresty
 
 # MongoDB
 wget -qO - https://www.mongodb.org/static/pgp/server-4.2.asc | apt-key add -
@@ -109,16 +108,17 @@ cp /usr/src/openssl/libcrypto.so.1.1 /usr/local/openresty/openssl/lib/libcrypto.
 cp /usr/src/openssl/libssl.so.1.1 /usr/local/openresty/openssl/lib/libssl.so.1.1
 
 # Firebird
-sed -i 's/RemoteBindAddress = localhost//' firebird.conf
+sed -i 's/RemoteBindAddress = localhost//' /etc/firebird/3.0/firebird.conf
 sed -i 's,# DatabaseAccess = Full,DatabaseAccess = Restrict /var/lib/firebird/3.0/data/,' /etc/firebird/3.0/firebird.conf
 systemctl stop firebird3.0
 
 echo "CREATE USER app PASSWORD '$APP_PASSWORD';" | isql-fb -u sysdba -p "$SYSDBA_PASSWORD" /var/lib/firebird/3.0/system/security3.fdb
 echo "CREATE DATABASE '/var/lib/firebird/3.0/data/luafirebird.fdb';" | isql-fb -u app -p "$APP_PASSWORD" /var/lib/firebird/3.0/system/security3.fdb
-chown firebird: /opt/app/luafirebird.fdb
+chown firebird: /var/lib/firebird/3.0/data/luafirebird.fdb
+systemctl start firebird3.0
 
 eval $(head -n12 /opt/app/server/nginx.conf.vagrant | sed 's/env /export /' | sed "s/=/='/" | sed "s/;/';/")
 lua /opt/app/migration.lua
 
-systemctl start firebird3.0
 systemctl enable firebird3.0
+systemctl restart openresty

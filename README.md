@@ -146,3 +146,15 @@ Os hostnames `prometheus` e `firebird` foram adicionados ao `/etc/hosts` para fa
 O provisionamento do **Docker** é um pouco mais complexo apesar do *compose-file* não ser tão extenso. Os contêineres **app**, **mongodb** e **grafana** tiveram suas diretivas `command` e/ou `entrypoint` alteradas para executarem seus respectivos arquivos no diretório `twitter-harvester/docker`. São eles `migration.sh`,  `mongo-restore.sh` e `grafana-restore.sh`.
 
 O *Dockerfile* pode assustar um pouco e utiliza uma técnica conhecida como *multi-stage building*, que neste caso descarta a camada de compilação da dependência `luasql-firebird` e `OpenSSL 1.1.1`, aproveitando apenas os binários resultantes, tornando a imagem considerávelmente menor.
+
+# API REST
+
+A aplicação expõe uma API muito simples com 5 *endpoints*:
+
+- GET - */fetch* - Limpa o banco de dados e insere informações atualizadas com base em uma nova pesquisa no Twitter.
+- GET - */metrics* - Um exportador do Prometheus criado especialmente para a aplicação, exibe as métricas quantitativas e de latência.
+- GET - */top_five* - Exibe os cinco usuários com mais seguidores com base nos dados salvos pela busca feita anteriormente por **/fetch**.
+- GET - */tweets_by_hour* - Lista a quantidade de tweets por hora, independente da hashtag com base nos dados salvos pela busca feita anteriormente por **/fetch**.
+- GET - */tweets_by_tag_and_location* - Lista os tweets por localização dos usuários e hashtags base nos dados salvos pela busca feita anteriormente por **/fetch**.
+
+Todos os *endpoints* retornam o formato *application/json* com excessão do **/metrics** que por exigência do Prometheus retorna o formato *text*.

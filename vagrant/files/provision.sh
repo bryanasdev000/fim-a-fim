@@ -36,7 +36,7 @@ echo "deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.2 main" > /etc
 apt-get update && apt-get install -y mongodb-org
 systemctl start mongod
 systemctl enable mongod
-tar -xf /vagrant/files/mongo-graylog.tar.xz -C /tmp
+tar -xf /vagrant/files/mongo-graylog.tar.gz -C /tmp
 cd /tmp
 mongorestore
 rm -rf /tmp/dump
@@ -78,7 +78,7 @@ apt-get update && apt-get install grafana
 cp /vagrant/files/grafana.db.xz /var/lib/grafana
 cd /var/lib/grafana
 rm -rf grafana.db
-xz --decompress grafana.db.xz
+gunzip grafana.db.gz
 chown grafana: /var/lib/grafana/grafana.db
 systemctl start grafana-server
 systemctl enable grafana-server

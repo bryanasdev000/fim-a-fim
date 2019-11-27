@@ -33,6 +33,7 @@ luarocks install lapis && \
 mv /tmp/libcrypto.so.1.1 /usr/local/openresty/openssl/lib/libcrypto.so.1.1 && \
 mv /tmp/libssl.so.1.1 /usr/local/openresty/openssl/lib/libssl.so.1.1
 
+EXPOSE 8080
 WORKDIR /opt/app
 
-CMD cd /opt/app/server && lapis server
+CMD openresty

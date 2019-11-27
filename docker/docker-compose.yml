@@ -1,67 +1,84 @@
 version: '3.0'
 
 services:
-  app:
-    image: twitter-harvester
-    build: 
-      context: './../'
-      dockerfile: './docker/Dockerfile'
-    environment:
-      FIREBIRD_HOST: firebird
-      FIREBIRD_USER: app
-      FIREBIRD_PASSWORD: zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J
-      FIREBIRD_DATABASE: luafirebird.fdb
-      GRAYLOG_HOST: graylog
-      GRAYLOG_PORT: 12201
-      GRAYLOG_USER: admin
-      GRAYLOG_DASHBOARD: 5ddb2b3ba048ab3fe5563fbd
-      GRAYLOG_WIDGET: 2a2d492e-500c-4d86-9ce2-3378fe7a9ba0
-      GRAYLOG_PASSWORD: admin
-      GRAYLOG_INPUT: gelf 
-    volumes:
-    - './../:/opt/app/'
-    - './../server/nginx.conf.compiled:/usr/local/openresty/nginx/conf/nginx.conf'
-    ports:
-    - '8080:8080'
-    command: openresty
-  firebird:
-    image: jacobalberty/firebird:3.0.4
-    environment:
-      ISC_PASSWORD: 'firebird'
-      FIREBIRD_USER: 'app'
-      FIREBIRD_PASSWORD: 'zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J'
-      FIREBIRD_DATABASE: 'luafirebird.fdb'
-  graylog:
-    image: graylog/graylog:3.1.3
-    environment:
-      GRAYLOG_PASSWORD_SECRET: 'wNJfMeW3ykAmLV8dMqp4Bkpzm444dsn7'
-      GRAYLOG_ROOT_PASSWORD_SHA2: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'
-      GRAYLOG_HTTP_EXTERNAL_URI: 'http://0.0.0.0:9000/'
-    ports:
-    - '9000:9000'
-    links:
-    - mongodb:mongo
-    - elasticsearch
-    depends_on:
-    - mongodb
-    - elasticsearch
-  mongodb:
-    image: mongo:4.2.1-bionic
-  elasticsearch:
-    image: elasticsearch:6.8.5
-    environment:
-      http.host: '0.0.0.0'
-      transport.host: 'localhost'
-      network.host: '0.0.0.0'
-  prometheus:
-    image: prom/prometheus:v2.14.0
-    volumes:
-    - './../docs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml'
-    ports:
-    - '9090:9090'
+  #  app:
+  #    image: twitter-harvester
+  #    build: 
+  #      context: './../'
+  #      dockerfile: './docker/Dockerfile'
+  #    environment:
+  #      FIREBIRD_HOST: firebird
+  #      FIREBIRD_USER: app
+  #      FIREBIRD_PASSWORD: zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J
+  #      FIREBIRD_DATABASE: luafirebird.fdb
+  #      GRAYLOG_HOST: graylog
+  #      GRAYLOG_PORT: 12201
+  #      GRAYLOG_USER: admin
+  #      GRAYLOG_DASHBOARD: 5ddb2b3ba048ab3fe5563fbd
+  #      GRAYLOG_WIDGET: 2a2d492e-500c-4d86-9ce2-3378fe7a9ba0
+  #      GRAYLOG_PASSWORD: admin
+  #      GRAYLOG_INPUT: gelf 
+  #    volumes:
+  #    - './../:/opt/app/'
+  #    - './../server/nginx.conf.compiled:/usr/local/openresty/nginx/conf/nginx.conf'
+  #    ports:
+  #    - '8080:8080'
+  #    command: openresty
+  #  firebird:
+  #    image: jacobalberty/firebird:3.0.4
+  #    environment:
+  #      ISC_PASSWORD: 'firebird'
+  #      FIREBIRD_USER: 'app'
+  #      FIREBIRD_PASSWORD: 'zjgNmeaoENepyDaeq2*vs)x)kbNm8L2J'
+  #      FIREBIRD_DATABASE: 'luafirebird.fdb'
+  #  mongodb:
+  #    image: mongo:4.2.1-bionic
+  #    environment:
+  #      MONGO_INITDB_DATABASE: graylog
+  #    volumes:
+  #    - mongodb:/data/db
+  #    - ./mongo-restore.sh:/docker-entrypoint-initdb.d/mongo-restore.sh
+  #    - ./../vagrant/files/mongo-graylog.tar.gz:/tmp/mongo-graylog.tar.gz
+  #  elasticsearch:
+  #    image: elasticsearch:6.8.5
+  #    environment:
+  #      http.host: '0.0.0.0'
+  #      transport.host: 'localhost'
+  #      network.host: '0.0.0.0'
+  #  prometheus:
+  #    image: prom/prometheus:v2.14.0
+  #    volumes:
+  #    - './../docs/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml'
+  #    ports:
+  #    - '9090:9090'
+  #  graylog:
+  #    image: graylog/graylog:3.1.3
+  #    environment:
+  #      GRAYLOG_PASSWORD_SECRET: 'wNJfMeW3ykAmLV8dMqp4Bkpzm444dsn7'
+  #      GRAYLOG_ROOT_PASSWORD_SHA2: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'
+  #      GRAYLOG_HTTP_EXTERNAL_URI: 'http://0.0.0.0:9000/'
+  #    ports:
+  #    - '9000:9000'
+  #    links:
+  #    - mongodb:mongo
+  #    - elasticsearch
+  #    depends_on:
+  #    - mongodb
+  #    - elasticsearch
   grafana:
     image: grafana/grafana:6.5.0
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+    entrypoint:
+    - sh
+    - /grafana-restore.sh
+    volumes:
+    - grafana:/var/lib/grafana
+    - ./../vagrant/files/grafana.db.gz:/var/lib/grafana/grafana.db.gz
+    - ./grafana-restore.sh:/grafana-restore.sh
     ports:
     - '3000:3000'
+
+volumes:
+  mongodb: {}
+  grafana: {}

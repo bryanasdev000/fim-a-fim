@@ -157,7 +157,7 @@ A aplicação expõe uma API muito simples com 5 *endpoints*:
 - GET - **/tweets_by_hour** - Lista a quantidade de tweets por hora, independente da hashtag com base nos dados salvos pela busca feita anteriormente por **/fetch**.
 - GET - **/tweets_by_tag_and_location** - Lista os tweets por localização dos usuários e hashtags base nos dados salvos pela busca feita anteriormente por **/fetch**.
 
-Todos os *endpoints* retornam o formato *application/json* com excessão do **/metrics** que por exigência do Prometheus retorna o formato *text*.
+Todos os *endpoints* retornam o formato *application/json* com exceção do **/metrics** que por exigência do Prometheus retorna o formato *text*.
 
 # Arquitetura
 
@@ -224,7 +224,7 @@ local b, c, h, s = http.request {
 }
 ```
 
-As variáveis de ambiente utilizadas são autoexplicativas, com excessão da `GRAYLOG_INPUT` que faz referência ao tipo de captura criado dentro do **Graylog**.
+As variáveis de ambiente utilizadas são autoexplicativas, com exceção da `GRAYLOG_INPUT` que faz referência ao tipo de captura criado dentro do **Graylog**.
 
 # Monitoramento
 
@@ -257,4 +257,11 @@ Com base nestes dados coletados, uma pequena *dashboard* foi criada dentro do Gr
 
 # Acessando o Graylog
 
+
+![Graylog View](/docs/graylog/view.png "Visualização dos Últimos Logs")
+
+![Graylog Dashboard](/docs/graylog/dashboard.png "Visualização do Sumário de Requisições, Avisos e Errors")
+
 # Acessando o Grafana
+
+![Dashboard Grafana](/docs/grafana/dashboard.png "Visualização do Estado Geral")

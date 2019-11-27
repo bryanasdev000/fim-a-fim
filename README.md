@@ -137,12 +137,12 @@ Para ambos os casos, a biblioteca OpenSSL 1.1.1 precisou ser compilada e copiada
 
 O provisionamento do **Vagrant** é bastante direto, e pode ser observado através do único arquivo `twitter-harvester/vagrant/provision.sh`.
 
-As ferramentas são instaladas em sequência, juntamente com a restauração dos *dumps* de cada banco, uma série de substituições com `sed` são realizadas, de modo a configurar os arquivos conforme a necessidade. Logo no início, a senha padrão para o Firebird é configurada em `/etc/firebird/3.0/SYSDBA.password`.
+Logo no início, a senha padrão para o Firebird é configurada em `/etc/firebird/3.0/SYSDBA.password`. As ferramentas são instaladas em sequência, juntamente com a restauração dos *dumps* de cada banco. Uma série de substituições com `sed` são realizadas, de modo a configurar os arquivos conforme a necessidade.
 
-Os hostnames `prometheus` e `firebird` foram adicionados ao `/etc/hosts` para facilitar a padronização dos arquivos de configuração.
+Os hostnames `prometheus` e `firebird` foram adicionados ao `/etc/hosts` para facilitar a padronização dos arquivos de configuração, fazendo com que a aplicação e o Grafana encontrem seus respectivos destinos.
 
 ## Provisionamento através do Docker
 
-O provisionamento do **Docker** é um pouco mais complexo apesar do *compose-file* não ser tão extenso. Os contêineres **app**, **mongodb** e **grafana** tiveram suas diretivas `command` e/ou `entrypoint` alteradas para executarem seus respectivos arquivos no diretório `twitter-harvester/docker`, são eles `migration.sh`,  `mongo-restore.sh` e `grafana-restore.sh`.
+O provisionamento do **Docker** é um pouco mais complexo apesar do *compose-file* não ser tão extenso. Os contêineres **app**, **mongodb** e **grafana** tiveram suas diretivas `command` e/ou `entrypoint` alteradas para executarem seus respectivos arquivos no diretório `twitter-harvester/docker`. São eles `migration.sh`,  `mongo-restore.sh` e `grafana-restore.sh`.
 
-O `*Dockerfile* pode assustar um pouco e utiliza uma técnica conhecida como *multi-stage building*, que neste caso descarta a camada de compilação da dependência `luasql-firebird` e `OpenSSL 1.1.1`, aproveitando apenas os binários resultantes, tornando a imagem considerávelmente menor.
+O *Dockerfile* pode assustar um pouco e utiliza uma técnica conhecida como *multi-stage building*, que neste caso descarta a camada de compilação da dependência `luasql-firebird` e `OpenSSL 1.1.1`, aproveitando apenas os binários resultantes, tornando a imagem considerávelmente menor.
